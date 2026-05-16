@@ -43,4 +43,31 @@ class Target extends Model
     {
         return $this->belongsTo(ReportLine::class);
     }
+
+    /** Per-day snapshot: stored text first, then that day's ids, then line/master. */
+    public function displayRode(?string $lineRodeName = null): string
+    {
+        $stored = trim((string) ($this->rode ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+        if ($lineRodeName !== null && trim($lineRodeName) !== '') {
+            return trim($lineRodeName);
+        }
+
+        return $this->rodeModel?->name ?? '';
+    }
+
+    public function displaySr(?string $lineSrName = null): string
+    {
+        $stored = trim((string) ($this->name ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+        if ($lineSrName !== null && trim($lineSrName) !== '') {
+            return trim($lineSrName);
+        }
+
+        return $this->srModel?->name ?? '';
+    }
 }

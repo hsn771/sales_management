@@ -318,6 +318,8 @@
                 @foreach($reportLines as $line)
                     @php
                         $target = $targetsByLineId->get($line->id);
+                        $rowRodeId = $target?->rode_id ?? $line->rode_id;
+                        $rowSrId = $target?->sr_id ?? $line->sr_id;
                     @endphp
                     <tr data-line-id="{{ $line->id }}" @if($target) data-id="{{ $target->id }}" @endif>
                         <td class="drag-handle" style="cursor: grab; color: #9ca3af;">
@@ -329,7 +331,7 @@
                             <select class="inline-input line-meta-field" data-line-id="{{ $line->id }}" data-field="rode_id">
                                 <option value="">Select Rode</option>
                                 @foreach($allRodes as $rode)
-                                    <option value="{{ $rode->id }}" {{ (int) $line->rode_id === (int) $rode->id ? 'selected' : '' }}>
+                                    <option value="{{ $rode->id }}" {{ (int) $rowRodeId === (int) $rode->id ? 'selected' : '' }}>
                                         {{ $rode->name }}</option>
                                 @endforeach
                             </select>
@@ -338,7 +340,7 @@
                             <select class="inline-input line-meta-field" data-line-id="{{ $line->id }}" data-field="sr_id">
                                 <option value="">Select SR</option>
                                 @foreach($allNames as $sr)
-                                    <option value="{{ $sr->id }}" {{ (int) $line->sr_id === (int) $sr->id ? 'selected' : '' }}>{{ $sr->name }}
+                                    <option value="{{ $sr->id }}" {{ (int) $rowSrId === (int) $sr->id ? 'selected' : '' }}>{{ $sr->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -378,7 +380,7 @@
                         </td>
                         <td>
                             <form action="{{ route('targets.reportLines.destroy', $line) }}" method="POST" style="display: inline;"
-                                onsubmit="return confirm('Remove this Rode/SR row from all dates?')">
+                                onsubmit="return confirm('Clear this row for {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }} only? Past dates keep their saved Rode/SR in Daily Report.')">
                                 @csrf
                                 @method('DELETE')
                                 <input type="hidden" name="date" value="{{ $selectedDate }}">
@@ -806,7 +808,8 @@
                             },
                             body: JSON.stringify({
                                 rode_id: rodeSel.value === '' ? null : parseInt(rodeSel.value, 10),
-                                sr_id: srSel.value === '' ? null : parseInt(srSel.value, 10)
+                                sr_id: srSel.value === '' ? null : parseInt(srSel.value, 10),
+                                report_date: '{{ $selectedDate }}'
                             })
                         }).catch(err => console.error('Error:', err));
                         return;

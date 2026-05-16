@@ -29,6 +29,7 @@ class DailyReportController extends Controller
 
         $dayTargets = Target::query()
             ->whereDate('report_date', $selectedDate)
+            ->with(['rodeModel', 'srModel'])
             ->orderBy('id')
             ->get();
 

@@ -19,6 +19,10 @@ Route::get('/monthly-summary', [MonthlySummaryController::class, 'index'])->name
 Route::get('/daily-report', [DailyReportController::class, 'index'])->name('daily-report.index');
 
 // Targets CRUD
+Route::get('targets/rodes', [TargetController::class, 'indexRodes'])->name('targets.rodes.index');
+Route::delete('targets/rodes/{rode}', [TargetController::class, 'destroyRode'])->name('targets.rodes.destroy');
+Route::get('targets/srs', [TargetController::class, 'indexSRs'])->name('targets.srs.index');
+Route::delete('targets/srs/{sr}', [TargetController::class, 'destroySR'])->name('targets.srs.destroy');
 Route::get('targets/create-rode', [TargetController::class, 'createRode'])->name('targets.createRode');
 Route::get('targets/create-sr', [TargetController::class, 'createSR'])->name('targets.createSR');
 Route::post('targets/store-rode', [TargetController::class, 'storeRode'])->name('targets.storeRode');

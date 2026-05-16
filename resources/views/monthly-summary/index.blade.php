@@ -50,28 +50,77 @@
             flex-shrink: 0;
         }
 
+        .ms-print-shell {
+            width: 100%;
+        }
+
         @media print {
+            --print-margin-top: 6mm;
+            --print-margin-right: 6mm;
+            --print-margin-bottom: 6mm;
+            --print-margin-left: 6mm;
+
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+
             .sidebar,
             .topbar,
             .no-print {
                 display: none !important;
             }
 
-            .main-wrap {
-                margin-left: 0 !important;
-            }
-
             body {
                 background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 100vh !important;
+                height: auto !important;
+            }
+
+            .main-wrap {
+                margin: 0 !important;
+                margin-left: 0 !important;
+                padding: 0 !important;
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 100vh !important;
+                height: auto !important;
             }
 
             .content {
-                padding: 10px !important;
+                flex: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                padding: var(--print-margin-top) var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left) !important;
+                margin: 0 !important;
+                min-height: 0 !important;
+                box-sizing: border-box !important;
+                background: #fff !important;
+            }
+
+            .ms-print-shell {
+                width: 100%;
+                max-width: 100%;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                flex: 0 0 auto;
             }
 
             .ms-sheet {
+                width: 100%;
                 border: 1px solid #000;
                 break-inside: avoid;
+                margin: 0;
             }
         }
 
@@ -204,6 +253,7 @@
             max="2099-12">
     </div>
 
+    <div class="ms-print-shell">
     <div class="ms-sheet">
         <div class="ms-title">Monthly Summary({{ $titleMonth }})</div>
         <table class="ms-table">
@@ -261,6 +311,7 @@
                 </tr>
             </tfoot>
         </table>
+    </div>
     </div>
 @endsection
 

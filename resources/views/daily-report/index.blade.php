@@ -60,12 +60,12 @@
         .report-date-top-space {
             background: #fff;
             min-height: 40px;
-            padding: 12px 16px 8px;
+            padding: 12px 16px 2px;
             display: flex;
             justify-content: flex-end;
             align-items: center;
             border-bottom: none;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         .report-date-top-right {
@@ -271,6 +271,10 @@
             width: 100%;
         }
 
+        .dr-print-top-gap {
+            display: none;
+        }
+
         .dr-page-head {
             display: flex;
             justify-content: space-between;
@@ -315,14 +319,19 @@
             }
 
             .report-date-top-space {
-                padding: 10px 12px 6px;
+                padding: 10px 12px 2px;
             }
         }
 
         @media print {
+            --print-margin-top: 3cm;
+            --print-margin-right: 6mm;
+            --print-margin-bottom: 0mm;
+            --print-margin-left: 6mm;
+
             @page {
                 size: A4 portrait;
-                margin: 10mm 8mm;
+                margin: 0;
             }
 
             .sidebar,
@@ -335,6 +344,7 @@
                 background: #fff !important;
                 overflow: visible !important;
                 margin: 0 !important;
+                padding: 0 !important;
                 display: flex !important;
                 flex-direction: column !important;
                 min-height: 100vh !important;
@@ -344,7 +354,9 @@
             }
 
             .main-wrap {
+                margin: 0 !important;
                 margin-left: 0 !important;
+                padding: 0 !important;
                 flex: 1 !important;
                 display: flex !important;
                 flex-direction: column !important;
@@ -353,46 +365,62 @@
                 overflow: visible !important;
             }
 
+            .dr-print-top-gap {
+                display: block !important;
+                width: 100%;
+                height: 3.2cm !important;
+                min-height: 3.2cm !important;
+                flex: 0 0 auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .content {
                 flex: 1 !important;
                 display: flex !important;
                 flex-direction: column !important;
-                justify-content: center !important;
+                justify-content: flex-start !important;
                 align-items: center !important;
-                padding: 0 !important;
+                padding: 0 var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left) !important;
                 margin: 0 !important;
-                min-height: 0 !important;
+                min-height: 100vh !important;
                 overflow: visible !important;
                 background: #fff !important;
+                box-sizing: border-box !important;
+            }
+
+            .content::after {
+                content: '';
+                display: block;
+                flex: 1 1 auto;
+                min-height: 0;
             }
 
             .dr-print-shell {
                 width: 100%;
                 max-width: 100%;
+                margin: 0 auto;
                 box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                flex: 1;
-                padding: 0 2mm;
+                display: block;
+                flex: 0 0 auto;
+                padding: 0;
             }
 
             .report-container {
                 box-shadow: none !important;
                 filter: none !important;
-                margin-top: 0 !important;
+                margin: 0 !important;
                 border: none !important;
                 width: 100%;
-                max-width: 186mm;
+                max-width: 100%;
                 box-sizing: border-box;
                 border-radius: 0;
             }
 
             .report-date-top-space {
-                min-height: 12mm !important;
-                padding: 4mm 12px 2mm !important;
-                margin-bottom: 5mm !important;
+                min-height: 0 !important;
+                padding: 0 12px 0.5mm !important;
+                margin-bottom: 1mm !important;
                 background: #fff !important;
                 border-bottom: none !important;
             }
@@ -537,11 +565,13 @@
         </div>
     </div>
 
+    <div class="dr-print-top-gap" aria-hidden="true"></div>
+
     <div class="dr-print-shell">
     <div class="report-container">
         <div class="report-date-top-space">
             <div class="report-date-top-right">
-                <span class="report-date-label">Date</span>
+                <span class="report-date-label"></span>
                 <span class="report-date-display">{{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }}</span>
                 <svg class="report-date-cal-svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -603,8 +633,16 @@
                         $target = $targetsByLineId->get($line->id);
                     @endphp
                     <tr>
-                        <td class="dr-read-cell">{{ $line->rode?->name ?? '—' }}</td>
-                        <td class="dr-read-cell">{{ $line->sr?->name ?? '—' }}</td>
+                        @php
+                            $rodeNm = $target
+                                ? ($target->displayRode($line->rode?->name) ?: '—')
+                                : ($line->rode?->name ?? '—');
+                            $srNm = $target
+                                ? ($target->displaySr($line->sr?->name) ?: '—')
+                                : ($line->sr?->name ?? '—');
+                        @endphp
+                        <td class="dr-read-cell">{{ $rodeNm }}</td>
+                        <td class="dr-read-cell">{{ $srNm }}</td>
                         <td class="dr-read-cell">{{ $target && (float) $target->target_percent > 0 ? (float) $target->target_percent : '—' }}</td>
                         <td class="dr-read-cell">{{ $target ? number_format($target->target, 0, '.', '') : '—' }}</td>
                         <td class="dr-read-cell">{{ $target ? number_format($target->balance, 0, '.', '') : '—' }}</td>
@@ -614,8 +652,12 @@
                 @endforeach
                 @foreach($legacyTargets as $target)
                     @php
-                        $rodeNm = optional($allRodes->firstWhere('id', $target->rode_id))->name ?? '—';
-                        $srNm = optional($allNames->firstWhere('id', $target->sr_id))->name ?? '—';
+                        $rodeNm = $target->displayRode(
+                            optional($allRodes->firstWhere('id', $target->rode_id))->name
+                        ) ?: '—';
+                        $srNm = $target->displaySr(
+                            optional($allNames->firstWhere('id', $target->sr_id))->name
+                        ) ?: '—';
                     @endphp
                     <tr>
                         <td class="dr-read-cell">{{ $rodeNm }}</td>

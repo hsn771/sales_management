@@ -304,6 +304,22 @@ class TargetController extends Controller
 
         $target->update($validated);
 
+        if (array_key_exists('rode_id', $validated)) {
+            $target->rode_id = $validated['rode_id'];
+            $target->rode = $target->rode_id
+                ? (Rode::query()->find($target->rode_id)?->name ?? '')
+                : '';
+        }
+        if (array_key_exists('sr_id', $validated)) {
+            $target->sr_id = $validated['sr_id'];
+            $target->name = $target->sr_id
+                ? (SR::query()->find($target->sr_id)?->name ?? '')
+                : '';
+        }
+        if (array_key_exists('rode_id', $validated) || array_key_exists('sr_id', $validated)) {
+            $target->save();
+        }
+
         // Recalculate Over and ACH
         $target->over = $target->balance > $target->target ? $target->balance - $target->target : 0;
         $target->ach = $target->target > 0 ? ($target->balance / $target->target) * 100 : 0;
@@ -358,9 +374,13 @@ class TargetController extends Controller
         }
 
         $date = $this->resolveReportDate($request->input('date'));
-        $reportLine->delete();
 
-        return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row removed.');
+        Target::query()
+            ->where('report_line_id', $reportLine->id)
+            ->whereDate('report_date', $date)
+            ->delete();
+
+        return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row cleared for this date only.');
     }
 
     public function updateReportLineMeta(Request $request, ReportLine $reportLine)
@@ -372,20 +392,29 @@ class TargetController extends Controller
         $validated = $request->validate([
             'rode_id' => 'nullable|integer|exists:rodes,id',
             'sr_id' => 'nullable|integer|exists:s_r_s,id',
+            'report_date' => 'nullable|date',
         ]);
 
-        $reportLine->fill($validated);
+        $reportLine->fill([
+            'rode_id' => $validated['rode_id'] ?? null,
+            'sr_id' => $validated['sr_id'] ?? null,
+        ]);
         $reportLine->save();
+        $reportLine->load(['rode', 'sr']);
 
         $rodeName = $reportLine->rode?->name ?? '';
         $srName = $reportLine->sr?->name ?? '';
+        $reportDate = $this->resolveReportDate($validated['report_date'] ?? $request->input('report_date'));
 
-        Target::query()->where('report_line_id', $reportLine->id)->update([
-            'rode_id' => $reportLine->rode_id,
-            'sr_id' => $reportLine->sr_id,
-            'rode' => $rodeName,
-            'name' => $srName,
-        ]);
+        Target::query()
+            ->where('report_line_id', $reportLine->id)
+            ->whereDate('report_date', $reportDate)
+            ->update([
+                'rode_id' => $reportLine->rode_id,
+                'sr_id' => $reportLine->sr_id,
+                'rode' => $rodeName,
+                'name' => $srName,
+            ]);
 
         return response()->json(['success' => true]);
     }
@@ -430,11 +459,6 @@ class TargetController extends Controller
             ]);
         }
 
-        $target->rode_id = $line->rode_id;
-        $target->sr_id = $line->sr_id;
-        $target->rode = $line->rode?->name ?? '';
-        $target->name = $line->sr?->name ?? '';
-
         if ($request->exists('target_percent')) {
             $target->target_percent = (float) ($validated['target_percent'] ?? 0);
         }
@@ -470,6 +494,50 @@ class TargetController extends Controller
         ]);
     }
 
+    public function indexRodes()
+    {
+        if (!Session::get('logged_in')) {
+            return redirect()->route('login');
+        }
+
+        $rodes = Rode::query()->orderBy('name')->get();
+
+        return view('targets.rodes.index', compact('rodes'));
+    }
+
+    public function indexSRs()
+    {
+        if (!Session::get('logged_in')) {
+            return redirect()->route('login');
+        }
+
+        $srs = SR::query()->orderBy('name')->get();
+
+        return view('targets.srs.index', compact('srs'));
+    }
+
+    public function destroyRode(Rode $rode)
+    {
+        if (!Session::get('logged_in')) {
+            return redirect()->route('login');
+        }
+
+        $rode->delete();
+
+        return redirect()->route('targets.rodes.index')->with('success', 'Rode deleted.');
+    }
+
+    public function destroySR(SR $sr)
+    {
+        if (!Session::get('logged_in')) {
+            return redirect()->route('login');
+        }
+
+        $sr->delete();
+
+        return redirect()->route('targets.srs.index')->with('success', 'SR deleted.');
+    }
+
     public function storeRode(Request $request)
     {
         if (!Session::get('logged_in')) {
@@ -477,7 +545,8 @@ class TargetController extends Controller
         }
         $validated = $request->validate(['rode' => 'required|string']);
         Rode::create(['name' => $validated['rode']]);
-        return redirect()->route('targets.index')->with('success', 'Rode added successfully');
+
+        return redirect()->route('targets.rodes.index')->with('success', 'Rode added successfully');
     }
 
     public function storeSR(Request $request)
@@ -487,7 +556,8 @@ class TargetController extends Controller
         }
         $validated = $request->validate(['name' => 'required|string']);
         SR::create(['name' => $validated['name']]);
-        return redirect()->route('targets.index')->with('success', 'SR added successfully');
+
+        return redirect()->route('targets.srs.index')->with('success', 'SR added successfully');
     }
 
     /**

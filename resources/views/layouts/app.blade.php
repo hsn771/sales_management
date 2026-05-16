@@ -139,6 +139,18 @@
             </svg>
             <span>Monthly Summary</span>
         </a>
+        <a href="{{ route('targets.rodes.index') }}" class="nav-item {{ request()->routeIs('targets.rodes.*') ? 'active' : '' }}">
+            <svg class="nav-item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span>Rode List</span>
+        </a>
+        <a href="{{ route('targets.srs.index') }}" class="nav-item {{ request()->routeIs('targets.srs.*') ? 'active' : '' }}">
+            <svg class="nav-item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            <span>SR List</span>
+        </a>
         <a href="{{ route('targets.createRode') }}" class="nav-item {{ request()->routeIs('targets.createRode') ? 'active' : '' }}">
             <svg class="nav-item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
@@ -174,6 +186,8 @@
                     request()->routeIs('targets.create') => 'Add Target',
                     request()->routeIs('targets.edit') => 'Edit Target',
                     request()->routeIs('targets.show') => 'Target',
+                    request()->routeIs('targets.rodes.index') => 'Rode List',
+                    request()->routeIs('targets.srs.index') => 'SR List',
                     request()->routeIs('targets.createRode') => 'Add Rode',
                     request()->routeIs('targets.createSR') => 'Add SR',
                     request()->routeIs('targets.*') => 'Targets',

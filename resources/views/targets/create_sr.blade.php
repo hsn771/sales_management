@@ -3,7 +3,7 @@
 @section('title', 'Add New SR')
 
 @section('content')
-    <a href="{{ route('targets.index') }}" class="btn-action" style="background: #fff; color: #64748b; border: 1px solid #e2e8f0; box-shadow: none; margin-bottom: 24px;">
+    <a href="{{ route('targets.srs.index') }}" class="btn-action" style="background: #fff; color: #64748b; border: 1px solid #e2e8f0; box-shadow: none; margin-bottom: 24px;">
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
         </svg>
@@ -30,7 +30,7 @@
 
             <div style="margin-top: 32px;">
                 <button type="submit" class="btn-action">Create SR</button>
-                <a href="{{ route('targets.index') }}" style="margin-left: 16px; color: #64748b; text-decoration: none; font-size: .88rem; font-weight: 600;">Cancel</a>
+                <a href="{{ route('targets.srs.index') }}" style="margin-left: 16px; color: #64748b; text-decoration: none; font-size: .88rem; font-weight: 600;">Cancel</a>
             </div>
         </form>
     </div>
