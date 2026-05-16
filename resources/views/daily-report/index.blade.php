@@ -182,25 +182,50 @@
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background: #d1d5db;
+            gap: 0;
+            background: #fff;
             border-top: 2px solid #374151;
+            border-left: 1px solid #d1d5db;
+            border-right: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
         }
 
         .summary-box {
             background: #f9fafb;
-            padding: 12px 15px;
+            padding: 7px 10px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
+            gap: 6px;
+            font-size: 0.85rem;
             color: #374151;
+            border-right: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
+            box-sizing: border-box;
+        }
+
+        .summary-box:nth-child(3n) {
+            border-right: none;
+            border-left: 1px solid #d1d5db;
+        }
+
+        .summary-box:nth-last-child(-n + 3) {
+            border-bottom: none;
+        }
+
+        .summary-box--target {
+            align-items: flex-start;
+        }
+
+        .summary-box--empty {
+            background: #e5e7eb;
+            min-height: 0;
         }
 
         .summary-box svg {
-            width: 18px;
-            height: 18px;
+            width: 15px;
+            height: 15px;
             color: #6b7280;
+            flex-shrink: 0;
         }
 
         .summary-label {
@@ -218,16 +243,16 @@
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 4px;
+            gap: 2px;
             margin-left: auto;
         }
 
         .summary-row-target-sum {
-            font-size: 0.72rem;
+            font-size: 0.65rem;
             color: #64748b;
             font-weight: 500;
             text-align: right;
-            line-height: 1.2;
+            line-height: 1.1;
             max-width: 200px;
         }
 
@@ -280,7 +305,12 @@
                 grid-template-columns: 1fr;
             }
 
+            .summary-box:nth-child(3n) {
+                border-right: none;
+            }
+
             .summary-box {
+                border-right: none !important;
                 flex-wrap: wrap;
             }
 
@@ -292,7 +322,7 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 12mm 10mm;
+                margin: 10mm 8mm;
             }
 
             .sidebar,
@@ -394,18 +424,87 @@
                 padding: 7px 10px !important;
             }
 
-            .summary-box {
-                font-size: 9.5pt !important;
-                padding: 8px 10px !important;
+            /* Summary: 3×3 sheet like reference — white cells, thin grid, grey corner */
+            .summary-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0 !important;
+                background: #fff !important;
+                border-top: 1px solid #d1d5db !important;
+                border-left: 1px solid #d1d5db !important;
+                border-right: 1px solid #d1d5db !important;
+                border-bottom: 1px solid #d1d5db !important;
             }
 
-            .summary-row-target-sum {
-                font-size: 8pt !important;
+            .summary-box {
+                background: #fff !important;
+                border-right: 1px solid #d1d5db !important;
+                border-bottom: 1px solid #d1d5db !important;
+                padding: 4px 8px !important;
+                font-size: 8.5pt !important;
+                color: #374151 !important;
+                gap: 5px !important;
+                align-items: center !important;
+                min-height: 0 !important;
+                box-sizing: border-box;
+            }
+
+            .summary-box--target {
+                align-items: flex-start !important;
+            }
+
+            .summary-box:nth-child(3n) {
+                border-right: none !important;
+                border-left: 1px solid #d1d5db !important;
+            }
+
+            .summary-box:nth-last-child(-n + 3) {
+                border-bottom: none !important;
+            }
+
+            .summary-box--empty {
+                background: #e8e8e8 !important;
+                border-right: none !important;
+                border-bottom: none !important;
             }
 
             .summary-box svg {
-                width: 15px;
-                height: 15px;
+                width: 14px !important;
+                height: 14px !important;
+                color: #6b7280 !important;
+                flex-shrink: 0;
+                margin-top: 0 !important;
+                stroke-width: 1.75 !important;
+            }
+
+            .summary-label {
+                font-weight: 600 !important;
+                color: #4b5563 !important;
+                font-size: 8pt !important;
+            }
+
+            .summary-value,
+            .summary-box .dr-summary-num {
+                font-weight: 700 !important;
+                color: #000 !important;
+                font-size: 9pt !important;
+            }
+
+            .summary-percent-wrap {
+                margin-left: auto !important;
+                align-items: flex-end !important;
+                gap: 1px !important;
+            }
+
+            .summary-row-target-sum {
+                font-size: 7pt !important;
+                color: #6b7280 !important;
+                line-height: 1.1 !important;
+            }
+
+            .summary-row-target-sum strong {
+                color: #000 !important;
+                font-size: 7pt !important;
             }
 
             .header-title {
@@ -532,7 +631,7 @@
         </table>
 
         <div class="summary-grid">
-            <div class="summary-box" style="align-items: flex-start;">
+            <div class="summary-box summary-box--target">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 8v8m-4-4h8" />
@@ -584,7 +683,7 @@
                 <span class="summary-value dr-summary-num">{{ $dayTargets->count() > 0 ? $bestName : '—' }}</span>
             </div>
 
-            <div class="summary-box" style="grid-column: span 1; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <div class="summary-box">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path
                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -592,13 +691,14 @@
                 <span class="summary-label">Daily Cost:</span>
                 <span class="summary-value dr-summary-num">{{ $dayTargets->count() > 0 ? number_format($dayTargets->first()->daily_cost ?? 0, 0, '.', '') : '—' }}</span>
             </div>
-            <div class="summary-box" style="grid-column: span 1; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <div class="summary-box">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
                 <span class="summary-label">APR %:</span>
                 <span class="summary-value dr-summary-num">{{ $aprPercentForDay !== null ? number_format($aprPercentForDay, 0, '.', '') : '—' }}</span>
             </div>
+            <div class="summary-box summary-box--empty" aria-hidden="true"></div>
         </div>
     </div>
     </div>
