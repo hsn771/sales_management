@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Targets') | Management System</title>
+    <title>@yield('title', 'Targets') | Am Distribution</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -15,8 +15,7 @@
         .sidebar-logo{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid #e8eaf0;min-height:60px;}
         .sidebar-logo .logo-text{font-size:.9rem;font-weight:700;color:#3b4edb;white-space:nowrap;overflow:hidden;transition:opacity .2s;}
         .sidebar.collapsed .logo-text{opacity:0;width:0;}
-        .logo-icon{width:28px;height:28px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-        .logo-icon svg{color:#fff;}
+        .logo-img{height:36px;width:auto;object-fit:contain;flex-shrink:0;}
 
         .nav-section{padding:10px 0;}
         .nav-section-label{font-size:.65rem;font-weight:700;letter-spacing:.08em;color:#94a3b8;padding:8px 16px 4px;text-transform:uppercase;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;}
@@ -112,12 +111,8 @@
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-        <div class="logo-icon">
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
-        </div>
-        <span class="logo-text">Management System</span>
+        <img src="{{ asset('images/am-distribution-logo.png') }}" alt="Am Distribution" class="logo-img">
+        <span class="logo-text">Am Distribution</span>
     </div>
 
     <div class="nav-section">
@@ -163,6 +158,12 @@
             </svg>
             <span>Add SR</span>
         </a>
+        <a href="{{ route('deletion-log.index') }}" class="nav-item {{ request()->routeIs('deletion-log.*') ? 'active' : '' }}">
+            <svg class="nav-item-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Log</span>
+        </a>
     </div>
 </aside>
 
@@ -190,6 +191,7 @@
                     request()->routeIs('targets.srs.index') => 'SR List',
                     request()->routeIs('targets.createRode') => 'Add Rode',
                     request()->routeIs('targets.createSR') => 'Add SR',
+                    request()->routeIs('deletion-log.*') => 'Deletion Log',
                     request()->routeIs('targets.*') => 'Targets',
                     default => 'Store 1',
                 };

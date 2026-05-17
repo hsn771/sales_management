@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sales Management System - Sign In">
-    <title>Sign In | Management System</title>
+    <meta name="description" content="Am Distribution - Sign In">
+    <title>Sign In | Am Distribution</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -128,6 +128,14 @@
         @keyframes cardIn {
             from { opacity: 0; transform: translateY(24px) scale(0.97); }
             to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-logo {
+            display: block;
+            height: 72px;
+            width: auto;
+            margin: 0 auto 20px;
+            object-fit: contain;
         }
 
         .card-title {
@@ -345,6 +353,7 @@
     <!-- Login Card -->
     <div class="card-wrap">
         <div class="login-card">
+            <img src="{{ asset('images/am-distribution-logo.png') }}" alt="Am Distribution" class="login-logo">
             <h1 class="card-title">SIGN IN</h1>
             <p class="card-sub">Enter your username and password to login</p>
 

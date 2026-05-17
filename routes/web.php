@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\MonthlySummaryController;
+use App\Http\Controllers\DeletionLogController;
 use App\Http\Controllers\TargetController;
 
 // Login
@@ -17,6 +18,8 @@ Route::redirect('/dashboard', '/targets');
 Route::get('/monthly-summary', [MonthlySummaryController::class, 'index'])->name('monthly-summary.index');
 
 Route::get('/daily-report', [DailyReportController::class, 'index'])->name('daily-report.index');
+
+Route::get('/deletion-log', [DeletionLogController::class, 'index'])->name('deletion-log.index');
 
 // Targets CRUD
 Route::get('targets/rodes', [TargetController::class, 'indexRodes'])->name('targets.rodes.index');

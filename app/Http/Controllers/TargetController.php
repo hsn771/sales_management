@@ -7,6 +7,7 @@ use App\Models\ReportLine;
 use App\Models\Rode;
 use App\Models\SR;
 use App\Models\Target;
+use App\Support\DeletionLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -183,6 +184,25 @@ class TargetController extends Controller
             return redirect()->route('login');
         }
         $date = $this->resolveReportDate($request->input('date') ?? $target->report_date?->format('Y-m-d'));
+
+        DeletionLogger::log(
+            'target',
+            $target->id,
+            sprintf(
+                'Target: %s / %s (%s)',
+                $target->displayRode(),
+                $target->displaySr(),
+                $target->report_date?->format('Y-m-d') ?? $date
+            ),
+            [
+                'report_date' => $target->report_date?->format('Y-m-d'),
+                'rode' => $target->displayRode(),
+                'sr' => $target->displaySr(),
+                'target' => $target->target,
+                'balance' => $target->balance,
+            ]
+        );
+
         $target->delete();
 
         return redirect()->route('targets.index', ['date' => $date])->with('success', 'Target deleted successfully.');
@@ -375,10 +395,31 @@ class TargetController extends Controller
 
         $date = $this->resolveReportDate($request->input('date'));
 
-        Target::query()
+        $reportLine->load(['rode', 'sr']);
+        $targetsQuery = Target::query()
             ->where('report_line_id', $reportLine->id)
-            ->whereDate('report_date', $date)
-            ->delete();
+            ->whereDate('report_date', $date);
+        $targetCount = (clone $targetsQuery)->count();
+
+        DeletionLogger::log(
+            'report_line',
+            $reportLine->id,
+            sprintf(
+                'Report row cleared for %s: %s / %s (%d target(s))',
+                $date,
+                $reportLine->rode?->name ?? '—',
+                $reportLine->sr?->name ?? '—',
+                $targetCount
+            ),
+            [
+                'report_date' => $date,
+                'rode' => $reportLine->rode?->name,
+                'sr' => $reportLine->sr?->name,
+                'targets_removed' => $targetCount,
+            ]
+        );
+
+        $targetsQuery->delete();
 
         return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row cleared for this date only.');
     }
@@ -522,6 +563,13 @@ class TargetController extends Controller
             return redirect()->route('login');
         }
 
+        DeletionLogger::log(
+            'rode',
+            $rode->id,
+            'Rode: '.$rode->name,
+            ['name' => $rode->name]
+        );
+
         $rode->delete();
 
         return redirect()->route('targets.rodes.index')->with('success', 'Rode deleted.');
@@ -532,6 +580,13 @@ class TargetController extends Controller
         if (!Session::get('logged_in')) {
             return redirect()->route('login');
         }
+
+        DeletionLogger::log(
+            'sr',
+            $sr->id,
+            'SR: '.$sr->name,
+            ['name' => $sr->name]
+        );
 
         $sr->delete();
 

@@ -441,7 +441,7 @@
             @foreach (range(1, 4) as $i)
                 <div class="report-signature-slot">
                     <span class="report-signature-line" aria-hidden="true"></span>
-                    <span class="report-signature-label">Sign</span>
+                    <span class="report-signature-label">Signature</span>
                 </div>
             @endforeach
         </div>
