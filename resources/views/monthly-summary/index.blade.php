@@ -438,10 +438,10 @@
     </div>
 
         <div class="report-signatures-row">
-            @foreach (range(1, 4) as $i)
+            @foreach (['Manager', 'RSM', 'RSO', 'Signature'] as $signatureLabel)
                 <div class="report-signature-slot">
                     <span class="report-signature-line" aria-hidden="true"></span>
-                    <span class="report-signature-label">Signature</span>
+                    <span class="report-signature-label">{{ $signatureLabel }}</span>
                 </div>
             @endforeach
         </div>
