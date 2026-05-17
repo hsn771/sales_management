@@ -269,6 +269,48 @@
 
         .dr-print-shell {
             width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-signatures-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-end;
+            flex-wrap: nowrap;
+            gap: 18px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 24px 16px 8px;
+            margin-top: auto;
+            margin-bottom: 72px;
+            background: #fff;
+        }
+
+        .report-signature-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .report-signature-line {
+            display: block;
+            width: 110px;
+            border-bottom: 1.5px solid #111827;
+            height: 0;
+        }
+
+        .report-signature-label {
+            display: block;
+            width: 110px;
+            margin-top: 5px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #374151;
+            letter-spacing: 0.03em;
         }
 
         .dr-print-top-gap {
@@ -390,10 +432,7 @@
             }
 
             .content::after {
-                content: '';
-                display: block;
-                flex: 1 1 auto;
-                min-height: 0;
+                display: none !important;
             }
 
             .dr-print-shell {
@@ -401,8 +440,10 @@
                 max-width: 100%;
                 margin: 0 auto;
                 box-sizing: border-box;
-                display: block;
-                flex: 0 0 auto;
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 1 auto !important;
+                min-height: calc(100vh - 3.2cm) !important;
                 padding: 0;
             }
 
@@ -546,6 +587,27 @@
 
             .report-header {
                 padding: 10px 14px !important;
+            }
+
+            .report-signatures-row {
+                margin-top: auto !important;
+                margin-bottom: 30mm !important;
+                justify-content: center !important;
+                padding: 8mm 0 0 0 !important;
+                gap: 5mm !important;
+                background: #fff !important;
+            }
+
+            .report-signature-line {
+                width: 38mm !important;
+                border-bottom: 1px solid #000 !important;
+            }
+
+            .report-signature-label {
+                width: 38mm !important;
+                margin-top: 1.5mm !important;
+                font-size: 8.5pt !important;
+                color: #000 !important;
             }
         }
     </style>
@@ -742,7 +804,17 @@
             </div>
             <div class="summary-box summary-box--empty" aria-hidden="true"></div>
         </div>
+
     </div>
+
+        <div class="report-signatures-row">
+            @foreach (range(1, 4) as $i)
+                <div class="report-signature-slot">
+                    <span class="report-signature-line" aria-hidden="true"></span>
+                    <span class="report-signature-label">Sign</span>
+                </div>
+            @endforeach
+        </div>
     </div>
 @endsection
 

@@ -50,12 +50,61 @@
             flex-shrink: 0;
         }
 
+        .ms-print-top-gap {
+            display: none;
+        }
+
         .ms-print-shell {
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: 24px;
+        }
+
+        .report-signatures-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: flex-end;
+            flex-wrap: nowrap;
+            gap: 18px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 48px 16px 8px;
+            margin-top: auto;
+            margin-bottom: 72px;
+            background: #fff;
+            border: none;
+        }
+
+        .report-signature-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 0 0 auto;
+            border: none;
+        }
+
+        .report-signature-line {
+            display: block;
+            width: 110px;
+            border-bottom: 1.5px solid #111827;
+            height: 0;
+        }
+
+        .report-signature-label {
+            display: block;
+            width: 110px;
+            margin-top: 5px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #374151;
+            letter-spacing: 0.03em;
         }
 
         @media print {
-            --print-margin-top: 6mm;
+            --print-margin-top: 3cm;
             --print-margin-right: 6mm;
             --print-margin-bottom: 6mm;
             --print-margin-left: 6mm;
@@ -71,56 +120,129 @@
                 display: none !important;
             }
 
+            html {
+                height: auto !important;
+            }
+
             body {
                 background: #fff !important;
+                overflow: visible !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                min-height: 100vh !important;
+                display: block !important;
+                min-height: 0 !important;
                 height: auto !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .main-wrap {
                 margin: 0 !important;
                 margin-left: 0 !important;
                 padding: 0 !important;
-                flex: 1 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                min-height: 100vh !important;
+                display: block !important;
+                min-height: 0 !important;
                 height: auto !important;
+                overflow: visible !important;
+            }
+
+            .ms-print-top-gap {
+                display: none !important;
             }
 
             .content {
-                flex: 1 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: center !important;
-                align-items: center !important;
-                padding: var(--print-margin-top) var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left) !important;
+                display: block !important;
+                padding: 0 var(--print-margin-right) var(--print-margin-bottom) var(--print-margin-left) !important;
                 margin: 0 !important;
                 min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
                 box-sizing: border-box !important;
                 background: #fff !important;
+            }
+
+            .content::after {
+                display: none !important;
             }
 
             .ms-print-shell {
                 width: 100%;
                 max-width: 100%;
                 margin: 0 auto;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                flex: 0 0 auto;
+                margin-top: 0 !important;
+                padding-top: 32mm !important;
+                display: block !important;
+                min-height: 0 !important;
+                height: auto !important;
+                box-sizing: border-box !important;
             }
 
             .ms-sheet {
                 width: 100%;
                 border: 1px solid #000;
-                break-inside: avoid;
-                margin: 0;
+                margin: 0 0 2mm 0 !important;
+            }
+
+            /* Print only: balanced row height — fills page while keeping signs on page 1 */
+            .ms-title {
+                padding: 8px 8px 9px !important;
+                font-size: 11pt !important;
+                line-height: 1.25 !important;
+            }
+
+            .ms-table {
+                font-size: 8pt !important;
+            }
+
+            .ms-table th,
+            .ms-table td {
+                padding: 3px 5px !important;
+                line-height: 1.22 !important;
+            }
+
+            .ms-table thead th {
+                padding: 4px 5px !important;
+            }
+
+            .ms-table tfoot td {
+                padding: 4px 5px !important;
+            }
+
+            .ms-table tfoot {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .report-signatures-row {
+                margin-top: 0 !important;
+                margin-bottom: 10mm !important;
+                justify-content: center !important;
+                padding: 9mm 6mm 0 0 !important;
+                gap: 5mm !important;
+                background: #fff !important;
+                border: none !important;
+                page-break-before: avoid !important;
+                break-before: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .report-signature-slot {
+                border: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .report-signature-line {
+                width: 38mm !important;
+                border-bottom: 1px solid #000 !important;
+            }
+
+            .report-signature-label {
+                width: 38mm !important;
+                margin-top: 1.5mm !important;
+                font-size: 8.5pt !important;
+                color: #000 !important;
             }
         }
 
@@ -129,6 +251,7 @@
             border: 1px solid #000;
             max-width: 100%;
             overflow-x: auto;
+            margin-bottom: 28px;
         }
 
         .ms-title {
@@ -254,6 +377,7 @@
     </div>
 
     <div class="ms-print-shell">
+        <div class="ms-print-top-gap" aria-hidden="true"></div>
     <div class="ms-sheet">
         <div class="ms-title">Monthly Summary({{ $titleMonth }})</div>
         <table class="ms-table">
@@ -312,6 +436,15 @@
             </tfoot>
         </table>
     </div>
+
+        <div class="report-signatures-row">
+            @foreach (range(1, 4) as $i)
+                <div class="report-signature-slot">
+                    <span class="report-signature-line" aria-hidden="true"></span>
+                    <span class="report-signature-label">Sign</span>
+                </div>
+            @endforeach
+        </div>
     </div>
 @endsection
 
