@@ -326,15 +326,14 @@ class TargetController extends Controller
         $srId = array_key_exists('sr_id', $validated) ? $validated['sr_id'] : $target->sr_id;
         $reportDate = $target->report_date?->format('Y-m-d') ?? $this->resolveReportDate(null);
 
-        if ($rodeId && $srId && $this->isDuplicateRodeSrPair(
-            (int) $rodeId,
-            (int) $srId,
-            $reportDate,
-            $target->report_line_id,
-            $target->id
-        )) {
+        if ($rodeId && $this->isDuplicateRodeForDate((int) $rodeId, $reportDate, $target->report_line_id, $target->id)) {
             return response()->json([
-                'error' => 'This Rode and SR are already assigned to another row.',
+                'error' => 'This Rode is already assigned to another row for this date.',
+            ], 422);
+        }
+        if ($srId && $this->isDuplicateSrForDate((int) $srId, $reportDate, $target->report_line_id, $target->id)) {
+            return response()->json([
+                'error' => 'This SR is already assigned to another row for this date.',
             ], 422);
         }
 
@@ -480,9 +479,14 @@ class TargetController extends Controller
         $srId = $validated['sr_id'] ?? null;
         $reportDate = $this->resolveReportDate($validated['report_date'] ?? $request->input('report_date'));
 
-        if ($rodeId && $srId && $this->isDuplicateRodeSrPair((int) $rodeId, (int) $srId, $reportDate, $reportLine->id, null)) {
+        if ($rodeId && $this->isDuplicateRodeForDate((int) $rodeId, $reportDate, $reportLine->id, null)) {
             return response()->json([
-                'error' => 'This Rode and SR are already assigned to another row.',
+                'error' => 'This Rode is already assigned to another row for this date.',
+            ], 422);
+        }
+        if ($srId && $this->isDuplicateSrForDate((int) $srId, $reportDate, $reportLine->id, null)) {
+            return response()->json([
+                'error' => 'This SR is already assigned to another row for this date.',
             ], 422);
         }
 
@@ -496,17 +500,28 @@ class TargetController extends Controller
         $rodeName = $reportLine->rode?->name ?? '';
         $srName = $reportLine->sr?->name ?? '';
 
-        Target::query()
-            ->where('report_line_id', $reportLine->id)
-            ->whereDate('report_date', $reportDate)
-            ->update([
-                'rode_id' => $reportLine->rode_id,
-                'sr_id' => $reportLine->sr_id,
-                'rode' => $rodeName,
-                'name' => $srName,
-            ]);
+        $target = Target::query()->firstOrNew([
+            'report_line_id' => $reportLine->id,
+            'report_date' => $reportDate,
+        ]);
 
-        return response()->json(['success' => true]);
+        $target->fill([
+            'rode_id' => $reportLine->rode_id,
+            'sr_id' => $reportLine->sr_id,
+            'rode' => $rodeName,
+            'name' => $srName,
+        ]);
+
+        if (! $target->exists) {
+            $first = Target::query()->whereDate('report_date', $reportDate)->orderBy('id')->first();
+            if ($first) {
+                $target->daily_cost = $first->daily_cost;
+            }
+        }
+
+        $target->save();
+
+        return response()->json(['success' => true, 'targetId' => $target->id]);
     }
 
     public function upsertDailyTarget(Request $request)
@@ -679,27 +694,34 @@ class TargetController extends Controller
         return $denominator > 0.0 ? ($totalBalance / $denominator) * 100 : 0.0;
     }
 
-    private function isDuplicateRodeSrPair(
+    private function isDuplicateRodeForDate(
         int $rodeId,
+        string $reportDate,
+        ?int $excludeLineId,
+        ?int $excludeTargetId
+    ): bool {
+        return $this->isDuplicateTargetFieldForDate('rode_id', $rodeId, $reportDate, $excludeLineId, $excludeTargetId);
+    }
+
+    private function isDuplicateSrForDate(
         int $srId,
         string $reportDate,
         ?int $excludeLineId,
         ?int $excludeTargetId
     ): bool {
-        $lineQuery = ReportLine::query()
-            ->where('rode_id', $rodeId)
-            ->where('sr_id', $srId);
-        if ($excludeLineId !== null) {
-            $lineQuery->where('id', '!=', $excludeLineId);
-        }
-        if ($lineQuery->exists()) {
-            return true;
-        }
+        return $this->isDuplicateTargetFieldForDate('sr_id', $srId, $reportDate, $excludeLineId, $excludeTargetId);
+    }
 
+    private function isDuplicateTargetFieldForDate(
+        string $field,
+        int $value,
+        string $reportDate,
+        ?int $excludeLineId,
+        ?int $excludeTargetId
+    ): bool {
         $targetQuery = Target::query()
             ->whereDate('report_date', $reportDate)
-            ->where('rode_id', $rodeId)
-            ->where('sr_id', $srId);
+            ->where($field, $value);
 
         if ($excludeTargetId !== null) {
             $targetQuery->where('id', '!=', $excludeTargetId);

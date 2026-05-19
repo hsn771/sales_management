@@ -315,11 +315,21 @@
                         ? (float) $percentBaseForDay
                         : $totalTarget;
                 @endphp
+                @php
+                    $fmtAmount = function ($value) {
+                        if ($value === null || $value === '') {
+                            return '';
+                        }
+                        $n = (float) $value;
+
+                        return abs($n) < 0.00001 ? '' : number_format($n, 0, '.', '');
+                    };
+                @endphp
                 @foreach($reportLines as $line)
                     @php
                         $target = $targetsByLineId->get($line->id);
-                        $rowRodeId = $target?->rode_id ?? $line->rode_id;
-                        $rowSrId = $target?->sr_id ?? $line->sr_id;
+                        $rowRodeId = $target?->rode_id;
+                        $rowSrId = $target?->sr_id;
                     @endphp
                     <tr data-line-id="{{ $line->id }}" @if($target) data-id="{{ $target->id }}" @endif>
                         <td class="drag-handle" style="cursor: grab; color: #9ca3af;">
@@ -360,22 +370,22 @@
                                 data-line-id="{{ $line->id }}"
                                 @if($target) data-id="{{ $target->id }}" @endif
                                 data-field="target"
-                                value="{{ $target ? number_format($target->target, 0, '.', '') : '' }}" step="0.01">
+                                value="{{ $target ? $fmtAmount($target->target) : '' }}" step="0.01">
                         </td>
                         <td>
                             <input type="number" class="inline-input daily-field"
                                 data-line-id="{{ $line->id }}"
                                 @if($target) data-id="{{ $target->id }}" @endif
                                 data-field="balance"
-                                value="{{ $target ? number_format($target->balance, 0, '.', '') : '' }}" step="0.01">
+                                value="{{ $target ? $fmtAmount($target->balance) : '' }}" step="0.01">
                         </td>
-                        <td id="{{ $target ? 'over-'.$target->id : 'over-line-'.$line->id }}">{{ $target ? number_format($target->over, 0, '.', '') : '' }}</td>
+                        <td id="{{ $target ? 'over-'.$target->id : 'over-line-'.$line->id }}">{{ $target ? $fmtAmount($target->over) : '' }}</td>
                         <td>
                             <input type="number" class="inline-input daily-field"
                                 data-line-id="{{ $line->id }}"
                                 @if($target) data-id="{{ $target->id }}" @endif
                                 data-field="commission"
-                                value="{{ $target ? number_format($target->commission, 0, '.', '') : '' }}"
+                                value="{{ $target ? $fmtAmount($target->commission) : '' }}"
                                 step="0.01">
                         </td>
                         <td>
@@ -424,16 +434,16 @@
                         </td>
                         <td>
                             <input type="number" class="inline-input update-field" data-id="{{ $target->id }}"
-                                data-field="target" value="{{ number_format($target->target, 0, '.', '') }}" step="0.01">
+                                data-field="target" value="{{ $fmtAmount($target->target) }}" step="0.01">
                         </td>
                         <td>
                             <input type="number" class="inline-input update-field" data-id="{{ $target->id }}"
-                                data-field="balance" value="{{ number_format($target->balance, 0, '.', '') }}" step="0.01">
+                                data-field="balance" value="{{ $fmtAmount($target->balance) }}" step="0.01">
                         </td>
-                        <td id="over-{{ $target->id }}">{{ number_format($target->over, 0, '.', '') }}</td>
+                        <td id="over-{{ $target->id }}">{{ $fmtAmount($target->over) }}</td>
                         <td>
                             <input type="number" class="inline-input update-field" data-id="{{ $target->id }}"
-                                data-field="commission" value="{{ number_format($target->commission, 0, '.', '') }}"
+                                data-field="commission" value="{{ $fmtAmount($target->commission) }}"
                                 step="0.01">
                         </td>
                         <td>
@@ -796,58 +806,27 @@
                 };
             }
 
-            function isDuplicateRodeSrPair(rodeId, srId, excludeRow) {
-                if (!rodeId || !srId) {
+            function isDuplicateRode(rodeId, excludeRow) {
+                if (!rodeId) {
                     return false;
                 }
                 return [...document.querySelectorAll('#sortable-tbody tr')].some(function (other) {
                     if (other === excludeRow) {
                         return false;
                     }
-                    const meta = getRowMeta(other);
-                    return meta.rodeId === String(rodeId) && meta.srId === String(srId);
+                    return getRowMeta(other).rodeId === String(rodeId);
                 });
             }
 
-            function refreshMetaSelectAvailability() {
-                const rows = [...document.querySelectorAll('#sortable-tbody tr')];
-                rows.forEach(function (row) {
-                    const meta = getRowMeta(row);
-                    if (!meta.rodeSel || !meta.srSel) {
-                        return;
+            function isDuplicateSr(srId, excludeRow) {
+                if (!srId) {
+                    return false;
+                }
+                return [...document.querySelectorAll('#sortable-tbody tr')].some(function (other) {
+                    if (other === excludeRow) {
+                        return false;
                     }
-                    meta.rodeSel.querySelectorAll('option').forEach(function (opt) {
-                        if (opt.value !== '') {
-                            opt.disabled = false;
-                        }
-                    });
-                    meta.srSel.querySelectorAll('option').forEach(function (opt) {
-                        if (opt.value !== '') {
-                            opt.disabled = false;
-                        }
-                    });
-                });
-                rows.forEach(function (row) {
-                    const meta = getRowMeta(row);
-                    if (!meta.rodeSel || !meta.srSel) {
-                        return;
-                    }
-                    meta.srSel.querySelectorAll('option').forEach(function (opt) {
-                        if (opt.value === '' || opt.value === meta.srId) {
-                            return;
-                        }
-                        if (meta.rodeId && isDuplicateRodeSrPair(meta.rodeId, opt.value, row)) {
-                            opt.disabled = true;
-                        }
-                    });
-                    meta.rodeSel.querySelectorAll('option').forEach(function (opt) {
-                        if (opt.value === '' || opt.value === meta.rodeId) {
-                            return;
-                        }
-                        if (meta.srId && isDuplicateRodeSrPair(opt.value, meta.srId, row)) {
-                            opt.disabled = true;
-                        }
-                    });
+                    return getRowMeta(other).srId === String(srId);
                 });
             }
 
@@ -866,8 +845,6 @@
                     rememberMetaSelectValue(this);
                 });
             });
-
-            refreshMetaSelectAvailability();
 
             const tbody = document.getElementById('sortable-tbody');
             if (tbody) {
@@ -888,10 +865,14 @@
                         const rodeId = rodeSel.value;
                         const srId = srSel.value;
 
-                        if (rodeId && srId && isDuplicateRodeSrPair(rodeId, srId, row)) {
-                            alert('This Rode and SR are already used on another row. Choose a different combination.');
+                        if (el.dataset.field === 'rode_id' && rodeId && isDuplicateRode(rodeId, row)) {
+                            alert('This Rode is already used on another row for this date.');
                             revertMetaSelect(el);
-                            refreshMetaSelectAvailability();
+                            return;
+                        }
+                        if (el.dataset.field === 'sr_id' && srId && isDuplicateSr(srId, row)) {
+                            alert('This SR is already used on another row for this date.');
+                            revertMetaSelect(el);
                             return;
                         }
 
@@ -916,13 +897,18 @@
                                 if (!result.ok) {
                                     alert(result.data.error || 'Could not save Rode/SR.');
                                     revertMetaSelect(el);
+                                    return;
                                 }
-                                refreshMetaSelectAvailability();
+                                if (result.data.targetId) {
+                                    row.dataset.id = String(result.data.targetId);
+                                    row.querySelectorAll('.daily-field').forEach(function (inp) {
+                                        inp.setAttribute('data-id', String(result.data.targetId));
+                                    });
+                                }
                             })
                             .catch(function (err) {
                                 console.error('Error:', err);
                                 revertMetaSelect(el);
-                                refreshMetaSelectAvailability();
                             });
                         return;
                     }
@@ -1023,10 +1009,14 @@
                             const rodeId = rodeSel ? rodeSel.value : '';
                             const srId = srSel ? srSel.value : '';
 
-                            if (rodeId && srId && isDuplicateRodeSrPair(rodeId, srId, row)) {
-                                alert('This Rode and SR are already used on another row. Choose a different combination.');
+                            if (field === 'rode_id' && rodeId && isDuplicateRode(rodeId, row)) {
+                                alert('This Rode is already used on another row for this date.');
                                 revertMetaSelect(el);
-                                refreshMetaSelectAvailability();
+                                return;
+                            }
+                            if (field === 'sr_id' && srId && isDuplicateSr(srId, row)) {
+                                alert('This SR is already used on another row for this date.');
+                                revertMetaSelect(el);
                                 return;
                             }
 
@@ -1051,12 +1041,10 @@
                                         alert(result.data.error || 'Could not save Rode/SR.');
                                         revertMetaSelect(el);
                                     }
-                                    refreshMetaSelectAvailability();
                                 })
                                 .catch(function (err) {
                                     console.error('Error:', err);
                                     revertMetaSelect(el);
-                                    refreshMetaSelectAvailability();
                                 });
                             return;
                         }
