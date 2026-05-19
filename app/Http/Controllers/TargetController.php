@@ -322,6 +322,22 @@ class TargetController extends Controller
             'commission' => 'nullable|numeric',
         ]);
 
+        $rodeId = array_key_exists('rode_id', $validated) ? $validated['rode_id'] : $target->rode_id;
+        $srId = array_key_exists('sr_id', $validated) ? $validated['sr_id'] : $target->sr_id;
+        $reportDate = $target->report_date?->format('Y-m-d') ?? $this->resolveReportDate(null);
+
+        if ($rodeId && $srId && $this->isDuplicateRodeSrPair(
+            (int) $rodeId,
+            (int) $srId,
+            $reportDate,
+            $target->report_line_id,
+            $target->id
+        )) {
+            return response()->json([
+                'error' => 'This Rode and SR are already assigned to another row.',
+            ], 422);
+        }
+
         $target->update($validated);
 
         if (array_key_exists('rode_id', $validated)) {
@@ -421,7 +437,31 @@ class TargetController extends Controller
 
         $targetsQuery->delete();
 
-        return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row cleared for this date only.');
+        $hasTargetsOnOtherDates = Target::query()
+            ->where('report_line_id', $reportLine->id)
+            ->exists();
+
+        if (! $hasTargetsOnOtherDates) {
+            DeletionLogger::log(
+                'report_line',
+                $reportLine->id,
+                sprintf(
+                    'Report row removed: %s / %s',
+                    $reportLine->rode?->name ?? '—',
+                    $reportLine->sr?->name ?? '—'
+                ),
+                [
+                    'rode' => $reportLine->rode?->name,
+                    'sr' => $reportLine->sr?->name,
+                ]
+            );
+
+            $reportLine->delete();
+
+            return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row removed.');
+        }
+
+        return redirect()->route('targets.index', ['date' => $date])->with('success', 'Row cleared for this date only. Past dates are unchanged.');
     }
 
     public function updateReportLineMeta(Request $request, ReportLine $reportLine)
@@ -436,16 +476,25 @@ class TargetController extends Controller
             'report_date' => 'nullable|date',
         ]);
 
+        $rodeId = $validated['rode_id'] ?? null;
+        $srId = $validated['sr_id'] ?? null;
+        $reportDate = $this->resolveReportDate($validated['report_date'] ?? $request->input('report_date'));
+
+        if ($rodeId && $srId && $this->isDuplicateRodeSrPair((int) $rodeId, (int) $srId, $reportDate, $reportLine->id, null)) {
+            return response()->json([
+                'error' => 'This Rode and SR are already assigned to another row.',
+            ], 422);
+        }
+
         $reportLine->fill([
-            'rode_id' => $validated['rode_id'] ?? null,
-            'sr_id' => $validated['sr_id'] ?? null,
+            'rode_id' => $rodeId,
+            'sr_id' => $srId,
         ]);
         $reportLine->save();
         $reportLine->load(['rode', 'sr']);
 
         $rodeName = $reportLine->rode?->name ?? '';
         $srName = $reportLine->sr?->name ?? '';
-        $reportDate = $this->resolveReportDate($validated['report_date'] ?? $request->input('report_date'));
 
         Target::query()
             ->where('report_line_id', $reportLine->id)
@@ -628,6 +677,41 @@ class TargetController extends Controller
             : $sumTargets;
 
         return $denominator > 0.0 ? ($totalBalance / $denominator) * 100 : 0.0;
+    }
+
+    private function isDuplicateRodeSrPair(
+        int $rodeId,
+        int $srId,
+        string $reportDate,
+        ?int $excludeLineId,
+        ?int $excludeTargetId
+    ): bool {
+        $lineQuery = ReportLine::query()
+            ->where('rode_id', $rodeId)
+            ->where('sr_id', $srId);
+        if ($excludeLineId !== null) {
+            $lineQuery->where('id', '!=', $excludeLineId);
+        }
+        if ($lineQuery->exists()) {
+            return true;
+        }
+
+        $targetQuery = Target::query()
+            ->whereDate('report_date', $reportDate)
+            ->where('rode_id', $rodeId)
+            ->where('sr_id', $srId);
+
+        if ($excludeTargetId !== null) {
+            $targetQuery->where('id', '!=', $excludeTargetId);
+        }
+        if ($excludeLineId !== null) {
+            $targetQuery->where(function ($q) use ($excludeLineId) {
+                $q->whereNull('report_line_id')
+                    ->orWhere('report_line_id', '!=', $excludeLineId);
+            });
+        }
+
+        return $targetQuery->exists();
     }
 
     private function resolveReportDate(?string $date): string

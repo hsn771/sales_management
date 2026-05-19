@@ -380,7 +380,7 @@
                         </td>
                         <td>
                             <form action="{{ route('targets.reportLines.destroy', $line) }}" method="POST" style="display: inline;"
-                                onsubmit="return confirm('Clear this row for {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }} only? Past dates keep their saved Rode/SR in Daily Report.')">
+                                onsubmit="return confirm('Delete this row? Empty rows are removed. If this row has saved data on other dates, only {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }} will be cleared.')">
                                 @csrf
                                 @method('DELETE')
                                 <input type="hidden" name="date" value="{{ $selectedDate }}">
@@ -784,6 +784,91 @@
                     }
                 });
             }
+            function getRowMeta(row) {
+                const rodeSel = row.querySelector('[data-field="rode_id"]');
+                const srSel = row.querySelector('[data-field="sr_id"]');
+                return {
+                    rodeId: rodeSel ? String(rodeSel.value) : '',
+                    srId: srSel ? String(srSel.value) : '',
+                    rodeSel,
+                    srSel,
+                    rowKey: row.dataset.lineId || row.dataset.id || '',
+                };
+            }
+
+            function isDuplicateRodeSrPair(rodeId, srId, excludeRow) {
+                if (!rodeId || !srId) {
+                    return false;
+                }
+                return [...document.querySelectorAll('#sortable-tbody tr')].some(function (other) {
+                    if (other === excludeRow) {
+                        return false;
+                    }
+                    const meta = getRowMeta(other);
+                    return meta.rodeId === String(rodeId) && meta.srId === String(srId);
+                });
+            }
+
+            function refreshMetaSelectAvailability() {
+                const rows = [...document.querySelectorAll('#sortable-tbody tr')];
+                rows.forEach(function (row) {
+                    const meta = getRowMeta(row);
+                    if (!meta.rodeSel || !meta.srSel) {
+                        return;
+                    }
+                    meta.rodeSel.querySelectorAll('option').forEach(function (opt) {
+                        if (opt.value !== '') {
+                            opt.disabled = false;
+                        }
+                    });
+                    meta.srSel.querySelectorAll('option').forEach(function (opt) {
+                        if (opt.value !== '') {
+                            opt.disabled = false;
+                        }
+                    });
+                });
+                rows.forEach(function (row) {
+                    const meta = getRowMeta(row);
+                    if (!meta.rodeSel || !meta.srSel) {
+                        return;
+                    }
+                    meta.srSel.querySelectorAll('option').forEach(function (opt) {
+                        if (opt.value === '' || opt.value === meta.srId) {
+                            return;
+                        }
+                        if (meta.rodeId && isDuplicateRodeSrPair(meta.rodeId, opt.value, row)) {
+                            opt.disabled = true;
+                        }
+                    });
+                    meta.rodeSel.querySelectorAll('option').forEach(function (opt) {
+                        if (opt.value === '' || opt.value === meta.rodeId) {
+                            return;
+                        }
+                        if (meta.srId && isDuplicateRodeSrPair(opt.value, meta.srId, row)) {
+                            opt.disabled = true;
+                        }
+                    });
+                });
+            }
+
+            function rememberMetaSelectValue(el) {
+                el.dataset.prevValue = el.value;
+            }
+
+            function revertMetaSelect(el) {
+                if (el.dataset.prevValue !== undefined) {
+                    el.value = el.dataset.prevValue;
+                }
+            }
+
+            document.querySelectorAll('#sortable-tbody [data-field="rode_id"], #sortable-tbody [data-field="sr_id"]').forEach(function (sel) {
+                sel.addEventListener('focus', function () {
+                    rememberMetaSelectValue(this);
+                });
+            });
+
+            refreshMetaSelectAvailability();
+
             const tbody = document.getElementById('sortable-tbody');
             if (tbody) {
                 tbody.addEventListener('input', function (e) {
@@ -800,6 +885,16 @@
                         const lineId = row.dataset.lineId;
                         const rodeSel = row.querySelector('.line-meta-field[data-field="rode_id"]');
                         const srSel = row.querySelector('.line-meta-field[data-field="sr_id"]');
+                        const rodeId = rodeSel.value;
+                        const srId = srSel.value;
+
+                        if (rodeId && srId && isDuplicateRodeSrPair(rodeId, srId, row)) {
+                            alert('This Rode and SR are already used on another row. Choose a different combination.');
+                            revertMetaSelect(el);
+                            refreshMetaSelectAvailability();
+                            return;
+                        }
+
                         fetch(`{{ url('targets/report-lines') }}/${lineId}/meta`, {
                             method: 'POST',
                             headers: {
@@ -811,7 +906,24 @@
                                 sr_id: srSel.value === '' ? null : parseInt(srSel.value, 10),
                                 report_date: '{{ $selectedDate }}'
                             })
-                        }).catch(err => console.error('Error:', err));
+                        })
+                            .then(function (response) {
+                                return response.json().then(function (data) {
+                                    return { ok: response.ok, data: data };
+                                });
+                            })
+                            .then(function (result) {
+                                if (!result.ok) {
+                                    alert(result.data.error || 'Could not save Rode/SR.');
+                                    revertMetaSelect(el);
+                                }
+                                refreshMetaSelectAvailability();
+                            })
+                            .catch(function (err) {
+                                console.error('Error:', err);
+                                revertMetaSelect(el);
+                                refreshMetaSelectAvailability();
+                            });
                         return;
                     }
 
@@ -904,6 +1016,50 @@
                         const field = el.dataset.field;
                         const row = el.closest('tr');
                         let body = {};
+
+                        if (field === 'rode_id' || field === 'sr_id') {
+                            const rodeSel = row.querySelector('.update-field[data-field="rode_id"]');
+                            const srSel = row.querySelector('.update-field[data-field="sr_id"]');
+                            const rodeId = rodeSel ? rodeSel.value : '';
+                            const srId = srSel ? srSel.value : '';
+
+                            if (rodeId && srId && isDuplicateRodeSrPair(rodeId, srId, row)) {
+                                alert('This Rode and SR are already used on another row. Choose a different combination.');
+                                revertMetaSelect(el);
+                                refreshMetaSelectAvailability();
+                                return;
+                            }
+
+                            body.rode_id = rodeId === '' ? null : parseInt(rodeId, 10);
+                            body.sr_id = srId === '' ? null : parseInt(srId, 10);
+
+                            fetch(`{{ url('targets') }}/${id}/inline-update`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify(body)
+                            })
+                                .then(function (response) {
+                                    return response.json().then(function (data) {
+                                        return { ok: response.ok, data: data };
+                                    });
+                                })
+                                .then(function (result) {
+                                    if (!result.ok) {
+                                        alert(result.data.error || 'Could not save Rode/SR.');
+                                        revertMetaSelect(el);
+                                    }
+                                    refreshMetaSelectAvailability();
+                                })
+                                .catch(function (err) {
+                                    console.error('Error:', err);
+                                    revertMetaSelect(el);
+                                    refreshMetaSelectAvailability();
+                                });
+                            return;
+                        }
 
                         if (field === 'target_percent') {
                             const raw = String(el.value).trim();
