@@ -31,6 +31,7 @@ Route::get('targets/create-sr', [TargetController::class, 'createSR'])->name('ta
 Route::post('targets/store-rode', [TargetController::class, 'storeRode'])->name('targets.storeRode');
 Route::post('targets/store-sr', [TargetController::class, 'storeSR'])->name('targets.storeSR');
 Route::post('targets/report-lines', [TargetController::class, 'storeReportLine'])->name('targets.reportLines.store');
+Route::post('targets/report-lines/reorder', [TargetController::class, 'reorderReportLines'])->name('targets.reportLines.reorder');
 Route::delete('targets/report-lines/{reportLine}', [TargetController::class, 'destroyReportLine'])->name('targets.reportLines.destroy');
 Route::post('targets/report-lines/{reportLine}/meta', [TargetController::class, 'updateReportLineMeta'])->name('targets.reportLines.updateMeta');
 Route::post('targets/daily-upsert', [TargetController::class, 'upsertDailyTarget'])->name('targets.dailyUpsert');

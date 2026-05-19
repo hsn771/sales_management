@@ -402,6 +402,28 @@ class TargetController extends Controller
         ])->with('success', 'Row added.');
     }
 
+    public function reorderReportLines(Request $request)
+    {
+        if (! Session::get('logged_in')) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'line_ids' => 'required|array|min:1',
+            'line_ids.*' => 'integer|exists:report_lines,id',
+        ]);
+
+        $position = 1;
+        foreach ($validated['line_ids'] as $lineId) {
+            ReportLine::query()
+                ->where('id', $lineId)
+                ->update(['position' => $position]);
+            $position++;
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function destroyReportLine(Request $request, ReportLine $reportLine)
     {
         if (!Session::get('logged_in')) {

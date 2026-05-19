@@ -560,15 +560,34 @@
                 });
             }
 
-            // Sortable logic
+            // Sortable logic — persist row order to server
             const el = document.getElementById('sortable-tbody');
             if (el) {
                 Sortable.create(el, {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
-                    onEnd: function (evt) {
-                        console.log('Row moved');
+                    onEnd: function () {
+                        const lineIds = [...el.querySelectorAll('tr[data-line-id]')].map(function (tr) {
+                            return parseInt(tr.dataset.lineId, 10);
+                        }).filter(function (id) {
+                            return !Number.isNaN(id);
+                        });
+
+                        if (lineIds.length === 0) {
+                            return;
+                        }
+
+                        fetch('{{ route('targets.reportLines.reorder') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ line_ids: lineIds })
+                        }).catch(function (err) {
+                            console.error('Could not save row order:', err);
+                        });
                     },
                 });
             }
