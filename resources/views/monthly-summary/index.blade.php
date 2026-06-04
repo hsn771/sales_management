@@ -204,13 +204,8 @@
                 padding: 4px 5px !important;
             }
 
-            .ms-table tfoot td {
+            .ms-table tr.ms-totals td {
                 padding: 4px 5px !important;
-            }
-
-            .ms-table tfoot {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
             }
 
             .report-signatures-row {
@@ -301,23 +296,15 @@
             white-space: nowrap;
         }
 
-        .ms-table tfoot td {
+        .ms-table tr.ms-totals td {
             font-weight: 700;
             text-align: center;
             background: #fff;
+            border-top: 2px solid #000;
         }
 
-        .ms-table tfoot .ms-num {
+        .ms-table tr.ms-totals .ms-num {
             font-weight: 700;
-        }
-
-        .ms-table tfoot tr.ms-grand td {
-            font-weight: 700;
-            background: #fff;
-        }
-
-        .ms-table tfoot tr.ms-grand .ms-num.ms-grand-val {
-            text-align: center;
         }
 
         @media (max-width: 900px) {
@@ -387,8 +374,9 @@
                     <th>Total Target</th>
                     <th>Yes/No</th>
                     <th>Target Balance</th>
-                    <th>Net Cost</th>
                     <th>Net Profit</th>
+                    <th>Net Cost</th>
+                    <th>Total Profit</th>
                     <th>Net loss</th>
                 </tr>
             </thead>
@@ -400,10 +388,12 @@
                             <td class="ms-num">{{ number_format($r['total_target'], 0, '.', ',') }}</td>
                             <td>{{-- Yes/No: temporarily blank --}}</td>
                             <td class="ms-num">{{ number_format($r['target_balance'], 0, '.', ',') }}</td>
+                            <td class="ms-num">{{ number_format($r['net_profit'], 0, '.', ',') }}</td>
                             <td class="ms-num">{{ number_format($r['net_cost'], 0, '.', ',') }}</td>
-                            <td class="ms-num">{{ $r['net_profit'] !== null ? number_format($r['net_profit'], 0, '.', ',') : '' }}</td>
+                            <td class="ms-num">{{ number_format($r['total_profit'], 0, '.', ',') }}</td>
                             <td class="ms-num">{{ $r['net_loss'] !== null ? number_format($r['net_loss'], 0, '.', ',') : '' }}</td>
                         @else
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -413,27 +403,17 @@
                         @endif
                     </tr>
                 @endforeach
-            </tbody>
-            <tfoot>
                 <tr class="ms-totals">
-                    <td class="ms-col-date"></td>
+                    <td class="ms-col-date">Total</td>
                     <td class="ms-num">{{ number_format($totals['total_target'], 0, '.', ',') }}</td>
                     <td></td>
                     <td class="ms-num">{{ number_format($totals['target_balance'], 0, '.', ',') }}</td>
-                    <td class="ms-num">{{ number_format($totals['net_cost'], 0, '.', ',') }}</td>
                     <td class="ms-num">{{ number_format($totals['net_profit'], 0, '.', ',') }}</td>
+                    <td class="ms-num">{{ number_format($totals['net_cost'], 0, '.', ',') }}</td>
+                    <td class="ms-num">{{ number_format($totals['total_profit'], 0, '.', ',') }}</td>
                     <td class="ms-num">{{ number_format($totals['net_loss'], 0, '.', ',') }}</td>
                 </tr>
-                <tr class="ms-grand">
-                    <td class="ms-col-date"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>Total</td>
-                    <td class="ms-num ms-grand-val">{{ number_format($grandNet, 0, '.', ',') }}/=</td>
-                    <td></td>
-                </tr>
-            </tfoot>
+            </tbody>
         </table>
     </div>
 

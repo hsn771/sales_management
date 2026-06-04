@@ -30,7 +30,7 @@ class MonthlySummaryController extends Controller
 
         $aggregates = Target::query()
             ->whereBetween('report_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-            ->selectRaw('report_date, SUM(target) as total_target, SUM(balance) as total_balance, MAX(daily_cost) as net_cost')
+            ->selectRaw('report_date, SUM(target) as total_target, SUM(balance) as total_balance, SUM(commission) as daily_commission, MAX(daily_cost) as daily_cost')
             ->groupBy('report_date')
             ->orderBy('report_date')
             ->get()
@@ -54,21 +54,20 @@ class MonthlySummaryController extends Controller
                 $sumRowTargets = (float) $agg->total_target;
                 $totalTarget = $savedPercentBase !== null ? $savedPercentBase : $sumRowTargets;
                 $totalBalance = (float) $agg->total_balance;
-                $netCost = (float) $agg->net_cost;
+                $netProfit = (float) $agg->daily_commission;
+                $netCost = (float) $agg->daily_cost;
+                $totalProfit = $netProfit - $netCost;
                 $metTarget = $totalBalance >= $totalTarget;
                 $yesNo = $metTarget ? 'Yes' : 'No';
-                $netProfit = $totalTarget >= $totalBalance ? $totalTarget - $totalBalance : null;
                 $netLoss = $totalTarget < $totalBalance ? $totalBalance - $totalTarget : null;
             } elseif ($savedPercentBase !== null) {
                 $totalTarget = $savedPercentBase;
-                $totalBalance = $netCost = null;
+                $totalBalance = $netCost = $netProfit = $totalProfit = null;
                 $yesNo = null;
-                $netProfit = null;
                 $netLoss = null;
             } else {
-                $totalTarget = $totalBalance = $netCost = null;
+                $totalTarget = $totalBalance = $netCost = $netProfit = $totalProfit = null;
                 $yesNo = null;
-                $netProfit = null;
                 $netLoss = null;
             }
 
@@ -77,16 +76,18 @@ class MonthlySummaryController extends Controller
                 'total_target' => $totalTarget,
                 'yes_no' => $yesNo,
                 'target_balance' => $totalBalance,
-                'net_cost' => $netCost,
                 'net_profit' => $netProfit,
+                'net_cost' => $netCost,
+                'total_profit' => $totalProfit,
                 'net_loss' => $netLoss,
             ];
         }
 
         $sumTarget = 0.0;
         $sumBalance = 0.0;
+        $sumCommission = 0.0;
         $sumCost = 0.0;
-        $sumProfit = 0.0;
+        $sumTotalProfit = 0.0;
         $sumLoss = 0.0;
         foreach ($rows as $r) {
             if ($r['total_target'] !== null) {
@@ -95,18 +96,19 @@ class MonthlySummaryController extends Controller
             if ($r['target_balance'] !== null) {
                 $sumBalance += $r['target_balance'];
             }
+            if ($r['net_profit'] !== null) {
+                $sumCommission += $r['net_profit'];
+            }
             if ($r['net_cost'] !== null) {
                 $sumCost += $r['net_cost'];
             }
-            if ($r['net_profit'] !== null) {
-                $sumProfit += $r['net_profit'];
+            if ($r['total_profit'] !== null) {
+                $sumTotalProfit += $r['total_profit'];
             }
             if ($r['net_loss'] !== null) {
                 $sumLoss += $r['net_loss'];
             }
         }
-        $grandNet = $sumProfit - $sumLoss;
-
         $titleMonth = strtoupper($monthStart->format('M')).'-'.$monthStart->format('y');
 
         return view('monthly-summary.index', [
@@ -117,11 +119,11 @@ class MonthlySummaryController extends Controller
             'totals' => [
                 'total_target' => $sumTarget,
                 'target_balance' => $sumBalance,
+                'net_profit' => $sumCommission,
                 'net_cost' => $sumCost,
-                'net_profit' => $sumProfit,
+                'total_profit' => $sumTotalProfit,
                 'net_loss' => $sumLoss,
             ],
-            'grandNet' => $grandNet,
         ]);
     }
 }
